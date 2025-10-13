@@ -12,6 +12,7 @@ name = "email_newsletter"
 
 [dev-dependencies]
 reqwest = "0.12"
+once_cell = "1"
 
 [dependencies]
 config = "0.11"
