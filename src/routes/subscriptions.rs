@@ -32,6 +32,4 @@ pub async fn subscribe(
                 HttpResponse::InternalServerError().finish()
             }
         }
-
-
 }
