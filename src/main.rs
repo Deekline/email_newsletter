@@ -3,6 +3,7 @@ use email_newsletter::startup::run;
 use email_newsletter::telemetry::{get_subsciber, init_subscriber};
 use secrecy::ExposeSecret;
 use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
 use std::net::TcpListener;
 
 #[tokio::main]
@@ -12,12 +13,14 @@ async fn main() -> std::io::Result<()> {
 
     let configuration = get_configuration().expect("Failed to read configuration.");
 
-    let connection_pool =
-        PgPool::connect(&configuration.database.connection_string().expose_secret())
-            .await
-            .expect("Failed to connect to Postgress.");
+    let connection_pool = PgPoolOptions::new()
+        .connect_lazy(&configuration.database.connection_string().expose_secret())
+        .expect("Failed to connect to Postgress.");
 
-    let address = format!("127.0.0.1:{}", configuration.application_port);
+    let address = format!(
+        "{}:{}",
+        configuration.application.host, configuration.application.port
+    );
     let listener = TcpListener::bind(address).expect("Failed to get port");
 
     run(listener, connection_pool)?.await
