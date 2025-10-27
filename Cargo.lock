@@ -612,6 +612,7 @@ dependencies = [
  "reqwest",
  "secrecy",
  "serde 1.0.228",
+ "serde-aux",
  "sqlx",
  "tokio",
  "tracing",
@@ -2135,6 +2136,17 @@ checksum = "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
 dependencies = [
  "serde_core",
  "serde_derive",
+]
+
+[[package]]
+name = "serde-aux"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d0a77223b653fa95f3f9864f3eb25b93e4ed170687eb42d85b6b98af21d5e1de"
+dependencies = [
+ "chrono",
+ "serde 1.0.228",
+ "serde_json",
 ]
 
 [[package]]

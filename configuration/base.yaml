@@ -1,0 +1,8 @@
+application:
+  port: 8000
+database:
+  host: "10.0.50.119"
+  port: 5432
+  username: "postgres"
+  password: "525819Flash%"
+  database_name: "rust-mail"
