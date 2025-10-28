@@ -96,6 +96,34 @@ async fn invalid_subscibe_form() {
     }
 }
 
+#[tokio::test]
+async fn invalid_subscibe_form_when_fields_empty() {
+    let app = spawn_app().await;
+    let client = reqwest::Client::new();
+    let test_cases = vec![
+        ("name=&email=ursula%40gmail.com", "empty name"),
+        ("name=Ursula&email=", "emtpy email"),
+        ("name=Ursula&email=definately-not-an-email", "invalid email"),
+    ];
+
+    for (body, description) in test_cases {
+        let response = client
+            .post(&format!("{}/subscriptions", &app.address))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(body)
+            .send()
+            .await
+            .expect("Failed to execute request.");
+
+        assert_eq!(
+            400,
+            response.status().as_u16(),
+            "The API did not return a 400 Bad Request when payload was {}",
+            description
+        )
+    }
+}
+
 async fn spawn_app() -> TestApp {
     Lazy::force(&TRACING);
 
