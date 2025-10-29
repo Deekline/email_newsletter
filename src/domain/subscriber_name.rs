@@ -24,10 +24,6 @@ impl AsRef<str> for SubscriberName {
         &self.0
     }
 }
-pub struct NewSubscriber {
-    pub email: String,
-    pub name: SubscriberName,
-}
 
 #[cfg(test)]
 mod tests {

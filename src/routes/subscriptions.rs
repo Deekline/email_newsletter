@@ -2,7 +2,6 @@ use actix_web::{HttpResponse, Responder, web};
 use chrono::Utc;
 use sqlx::PgPool;
 use tracing;
-use unicode_segmentation::UnicodeSegmentation;
 use uuid::Uuid;
 
 use crate::domain::{NewSubscriber, SubscriberName};
