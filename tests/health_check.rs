@@ -4,7 +4,6 @@ use email_newsletter::{
     telemetry::{get_subsciber, init_subscriber},
 };
 use once_cell::sync::Lazy;
-use secrecy::ExposeSecret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
