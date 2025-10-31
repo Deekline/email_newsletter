@@ -1,11 +1,10 @@
 use email_newsletter::{
     configuration::{DatabaseSettings, get_configuration},
-    email_client::{self, EmailClient},
+    email_client::EmailClient,
     startup::run,
     telemetry::{get_subsciber, init_subscriber},
 };
 use once_cell::sync::Lazy;
-use secrecy::ExposeSecret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
@@ -142,10 +141,12 @@ async fn spawn_app() -> TestApp {
         .sender()
         .expect("Invalid sender email address.");
 
+    let timeout = configuration.email_client.timeout();
     let email_client = EmailClient::new(
         configuration.email_client.base_url,
         sender_email,
         configuration.email_client.authorization_token,
+        timeout,
     );
 
     let server =
