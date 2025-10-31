@@ -1,9 +1,11 @@
 use email_newsletter::{
     configuration::{DatabaseSettings, get_configuration},
+    email_client::{self, EmailClient},
     startup::run,
     telemetry::{get_subsciber, init_subscriber},
 };
 use once_cell::sync::Lazy;
+use secrecy::ExposeSecret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
@@ -135,7 +137,19 @@ async fn spawn_app() -> TestApp {
 
     let connection_pool = configure_db(&configuration.database).await;
 
-    let server = run(listener, connection_pool.clone()).expect("Failed to bind address");
+    let sender_email = configuration
+        .email_client
+        .sender()
+        .expect("Invalid sender email address.");
+
+    let email_client = EmailClient::new(
+        configuration.email_client.base_url,
+        sender_email,
+        configuration.email_client.authorization_token,
+    );
+
+    let server =
+        run(listener, connection_pool.clone(), email_client).expect("Failed to bind address");
 
     let _ = tokio::spawn(server);
 
