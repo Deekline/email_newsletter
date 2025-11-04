@@ -9,14 +9,13 @@ pub struct EmailClient {
     authorization_token: Secret<String>,
 }
 
-#[derive(serde::Serialize)]
-#[serde(rename_all = "PascalCase")]
+#[derive(serde::Serialize, Debug)]
 struct SendEmailRequest<'a> {
     from: &'a str,
-    to: &'a str,
+    to: [&'a str; 1],
     subject: &'a str,
-    html_body: &'a str,
-    text_body: &'a str,
+    html: &'a str,
+    text: &'a str,
 }
 
 impl EmailClient {
@@ -41,23 +40,25 @@ impl EmailClient {
         html_content: &str,
         text_content: &str,
     ) -> Result<(), reqwest::Error> {
-        let url = format!("{}/email", self.base_url);
+        let url = format!("{}/emails", self.base_url);
+
         let request_body = SendEmailRequest {
             from: self.sender.as_ref(),
-            to: recipient.as_ref(),
+            to: [recipient.as_ref()],
             subject,
-            html_body: html_content,
-            text_body: text_content,
+            html: html_content,
+            text: text_content,
         };
 
-        self.http_client
+        let response = self
+            .http_client
             .post(&url)
             .bearer_auth(self.authorization_token.expose_secret())
             .json(&request_body)
             .send()
             .await?
             .error_for_status()?;
-
+        println!("{:?}, response", response);
         Ok(())
     }
 }
@@ -84,11 +85,11 @@ mod tests {
             let result: Result<serde_json::Value, _> = serde_json::from_slice(&request.body);
 
             if let Ok(body) = result {
-                body.get("From").is_some()
-                    && body.get("To").is_some()
-                    && body.get("Subject").is_some()
-                    && body.get("HtmlBody").is_some()
-                    && body.get("TextBody").is_some()
+                body.get("from").is_some()
+                    && body.get("to").is_some()
+                    && body.get("subject").is_some()
+                    && body.get("html").is_some()
+                    && body.get("text").is_some()
             } else {
                 false
             }
@@ -125,7 +126,7 @@ mod tests {
             email_client.authorization_token.expose_secret(),
         ))
         .and(header("Content-Type", "application/json"))
-        .and(path("/email"))
+        .and(path("/emails"))
         .and(method("POST"))
         .and(SendEmailBodyMatcher)
         .respond_with(ResponseTemplate::new(200))

@@ -1,3 +1,7 @@
+use email_newsletter::email_client;
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, ResponseTemplate};
+
 use crate::helpers::spawn_app;
 
 #[tokio::test]
@@ -5,7 +9,15 @@ async fn valid_subscribe_form() {
     let app = spawn_app().await;
 
     let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
+
+    Mock::given(path("/emails"))
+        .and(method("POST"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&app.email_server)
+        .await;
+
     let response = app.post_subscription(body.into()).await;
+
     assert_eq!(200, response.status().as_u16());
 
     let saved = sqlx::query!("SELECT email, name FROM subscriptions")
@@ -58,4 +70,21 @@ async fn invalid_subscibe_form_when_fields_empty() {
             description
         )
     }
+}
+
+#[tokio::test]
+async fn subscribe_sends_confiramtion_email() {
+    let app = spawn_app().await;
+    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
+
+    Mock::given(path("/emails"))
+        .and(method("POST"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&app.email_server)
+        .await;
+
+    app.post_subscription(body.into()).await;
+
+    let email_request = &app.email_server.received_requests().await.unwrap()[0];
+    let body: serde_json::Value = serde_json::from_slice(&email_request.body).unwrap();
 }
