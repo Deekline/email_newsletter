@@ -46,16 +46,38 @@ pub async fn subscribe(
         return HttpResponse::InternalServerError().finish();
     }
 
-    match email_client
-        .send_email(new_subscriber.email, "Welcome!", "welcomeeee", "welcome")
-        .await
-    {
+    match send_confirmation_email(&email_client, new_subscriber).await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(e) => {
             tracing::error!("Failed to send email: {:?}", e);
             HttpResponse::InternalServerError().finish()
         }
     }
+}
+
+#[tracing::instrument(
+    name = "Send a confirmation email to a new subscriber",
+    skip(email_client, new_subscriber)
+)]
+pub async fn send_confirmation_email(
+    email_client: &EmailClient,
+    new_subscriber: NewSubscriber,
+) -> Result<(), reqwest::Error> {
+    let confirmation_link = "http://my-api.com/subscriptions/confirm";
+
+    let plain_body = &format!(
+        "Welcome to our newletter!\nVisit {} to confirm your subscription.",
+        confirmation_link
+    );
+    let html_body = &format!(
+        "Welcome to newsletter! <br/>\
+                Clieck <a href=\"{}\">here</a> to confirm your subscriptions.",
+        confirmation_link
+    );
+
+    email_client
+        .send_email(new_subscriber.email, "Welcome!", html_body, &plain_body)
+        .await
 }
 
 #[tracing::instrument(
@@ -69,7 +91,7 @@ pub async fn insert_subscriber(
     sqlx::query!(
         r#"
         INSERT INTO subscriptions (id, email, name, subscribed_at, status)
-        VALUES ($1, $2, $3, $4, 'confirmed')
+        VALUES ($1, $2, $3, $4, 'pending_confirmation')
         "#,
         Uuid::new_v4(),
         new_subscriber.email.as_ref(),

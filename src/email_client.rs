@@ -58,7 +58,6 @@ impl EmailClient {
             .send()
             .await?
             .error_for_status()?;
-        println!("{:?}, response", response);
         Ok(())
     }
 }
